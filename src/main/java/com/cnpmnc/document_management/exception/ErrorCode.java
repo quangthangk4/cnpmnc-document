@@ -15,7 +15,9 @@ public enum ErrorCode {
     TOKEN_REFRESH_FAILED(1406, "Token refresh failed", HttpStatus.BAD_REQUEST),
     TOKEN_INVALID(2604, "Token invalid", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND(1100, "User not found", HttpStatus.NOT_FOUND),
-
+    USER_ALREADY_EXISTS(1101, "Username already exists", HttpStatus.CONFLICT),
+    INVALID_REGISTER_DATA(1102, "Invalid registration data", HttpStatus.BAD_REQUEST),
+    REGISTER_FAILED(1103, "Registration failed", HttpStatus.INTERNAL_SERVER_ERROR),
 
     ;
 
