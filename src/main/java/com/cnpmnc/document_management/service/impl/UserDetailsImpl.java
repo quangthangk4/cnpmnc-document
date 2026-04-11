@@ -1,4 +1,4 @@
-package com.cnpmnc.document_management.service;
+package com.cnpmnc.document_management.service.impl;
 
 import com.cnpmnc.document_management.entity.User;
 import lombok.AllArgsConstructor;

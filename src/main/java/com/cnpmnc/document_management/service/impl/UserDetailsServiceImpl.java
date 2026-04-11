@@ -4,7 +4,6 @@ import com.cnpmnc.document_management.entity.User;
 import com.cnpmnc.document_management.exception.AppException;
 import com.cnpmnc.document_management.exception.ErrorCode;
 import com.cnpmnc.document_management.repository.UserRepository;
-import com.cnpmnc.document_management.service.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
