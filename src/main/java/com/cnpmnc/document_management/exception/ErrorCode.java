@@ -15,8 +15,13 @@ public enum ErrorCode {
     TOKEN_REFRESH_FAILED(1406, "Token refresh failed", HttpStatus.BAD_REQUEST),
     TOKEN_INVALID(2604, "Token invalid", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND(1100, "User not found", HttpStatus.NOT_FOUND),
-
-
+    
+    // Document errors
+    DOCUMENT_NOT_FOUND(2001, "Document not found", HttpStatus.NOT_FOUND),
+    INVALID_FILE(2002, "Invalid file", HttpStatus.BAD_REQUEST),
+    FILE_SIZE_EXCEEDS(2003, "File size exceeds maximum limit", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_NOT_FOUND(2004, "Department not found", HttpStatus.NOT_FOUND),
+    UPLOAD_FAILED(2005, "Document upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     private final int code;

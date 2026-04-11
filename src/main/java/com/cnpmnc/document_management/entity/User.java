@@ -1,21 +1,14 @@
 package com.cnpmnc.document_management.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Table(name = "users")
 @Entity
@@ -26,17 +19,36 @@ import java.util.Set;
 @Builder
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @Column(columnDefinition = "uuid")
+    private UUID id;
+    
+    @Column(name = "first_name")
+    private String firstName;
+    
+    @Column(name = "last_name")
+    private String lastName;
+    
+    @Column(nullable = false, unique = true)
     private String username;
+    
+    @Column(nullable = false)
     private String password;
-
-    @ManyToMany
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "userId"),
-            inverseJoinColumns = @JoinColumn(name = "roleId")
-    )
-    @Builder.Default
-    private Set<Role> roles = new HashSet<>();
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
+    
+    @Column(nullable = false)
+    private String role;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+        this.createdAt = LocalDateTime.now();
+    }
 }

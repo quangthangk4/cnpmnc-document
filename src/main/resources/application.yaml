@@ -2,6 +2,11 @@ spring:
   application:
     name: document-management
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
   datasource:
     url: jdbc:postgresql://localhost:5432/document
     username: document
@@ -24,3 +29,4 @@ jwt:
 
 server:
   port: 8080
+  

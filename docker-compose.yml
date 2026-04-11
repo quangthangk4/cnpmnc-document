@@ -1,24 +1,42 @@
+version: '3.9'
+
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:15
     container_name: postgres_db
-
     environment:
       POSTGRES_DB: document
       POSTGRES_USER: document
       POSTGRES_PASSWORD: document
-
     ports:
       - "5432:5432"
-
     volumes:
-      - postgres_data:/var/lib/postgresql
-
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U library -d library"]
+      test: ["CMD-SHELL", "pg_isready -U document -d document"]
       interval: 10s
       timeout: 5s
       retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: document_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/document
+      SPRING_DATASOURCE_USERNAME: document
+      SPRING_DATASOURCE_PASSWORD: document
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    restart: on-failure
 
 volumes:
   postgres_data:

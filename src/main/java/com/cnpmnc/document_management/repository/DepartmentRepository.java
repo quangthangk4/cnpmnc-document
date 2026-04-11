@@ -1,13 +1,12 @@
 package com.cnpmnc.document_management.repository;
 
-import com.cnpmnc.document_management.entity.User;
+import com.cnpmnc.document_management.entity.Department;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByUsername(String username);
+public interface DepartmentRepository extends JpaRepository<Department, Integer> {
+    Optional<Department> findByName(String name);
 }
