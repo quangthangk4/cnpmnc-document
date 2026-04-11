@@ -19,9 +19,6 @@ public class OpenApiConfig {
     public OpenAPI libraryOpenAPI() {
         // 1. Cấu hình Server (để Swagger biết gọi API ở đâu)
         Server localServer = new Server();
-        localServer.setUrl("http://localhost:" + 8080);
-        localServer.setDescription("Local Server");
-
         // 2. Cấu hình Info (Thông tin đồ án)
         Info info = new Info()
                 .title("Library Management System API")

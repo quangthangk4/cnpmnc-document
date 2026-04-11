@@ -13,7 +13,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +32,12 @@ public class User {
     private String id;
     private String username;
     private String password;
+    private String firstName;
+    private String lastName;
+    private Long departmentId;
+
+    @CreatedDate
+    private LocalDateTime createAt;
 
     @ManyToMany
     @JoinTable(

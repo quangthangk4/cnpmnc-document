@@ -15,8 +15,9 @@ public enum ErrorCode {
     TOKEN_REFRESH_FAILED(1406, "Token refresh failed", HttpStatus.BAD_REQUEST),
     TOKEN_INVALID(2604, "Token invalid", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND(1100, "User not found", HttpStatus.NOT_FOUND),
-
-
+    USERNAME_OR_PASSWORD_INCORRECT(1109, "Username or password is incorrect", HttpStatus.BAD_REQUEST),
+    USERNAME_ALREADY_EXISTS(1101, "Username already exists", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_ALREADY_EXISTS(1102, "Department already exists", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;
