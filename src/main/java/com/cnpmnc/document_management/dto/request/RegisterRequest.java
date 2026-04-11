@@ -1,4 +1,4 @@
-package com.cnpmnc.document_management.dto;
+package com.cnpmnc.document_management.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

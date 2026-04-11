@@ -17,6 +17,9 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.Column;
+import java.time.LocalDateTime;
+
 @Table(name = "users")
 @Entity
 @AllArgsConstructor

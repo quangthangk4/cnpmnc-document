@@ -1,4 +1,4 @@
-package com.cnpmnc.document_management.dto;
+package com.cnpmnc.document_management.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserResponse {
+public class RegisterResponse {
     private String id;
     private String firstName;
     private String lastName;

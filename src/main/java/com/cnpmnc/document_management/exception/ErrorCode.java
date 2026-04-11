@@ -18,7 +18,7 @@ public enum ErrorCode {
     USER_ALREADY_EXISTS(1101, "Username already exists", HttpStatus.CONFLICT),
     INVALID_REGISTER_DATA(1102, "Invalid registration data", HttpStatus.BAD_REQUEST),
     REGISTER_FAILED(1103, "Registration failed", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    ROLE_NOT_FOUND(1104, "Role not found", HttpStatus.NOT_FOUND),
     ;
 
     private final int code;
