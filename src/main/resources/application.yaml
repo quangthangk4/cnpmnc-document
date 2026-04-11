@@ -2,5 +2,25 @@ spring:
   application:
     name: document-management
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/document
+    username: document
+    password: document
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Changed from 'update' - let Flyway manage schema
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: false
+
+jwt:
+  rsa-private-key: classpath:certs/privateKey.pem
+  rsa-public-key: classpath:certs/publicKey.pem
+  key-id: ${JWT_KEY_ID:library-key}
+  expirationTime: ${EXP_TOKEN:86400} # 1 day in seconds
+  refreshExpTime: ${EXP_REFRESH_TOKEN:604800} # 7 days in seconds
+
 server:
   port: 8080
