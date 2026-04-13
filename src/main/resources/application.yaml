@@ -2,6 +2,10 @@ spring:
   application:
     name: document-management
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   datasource:
     url: jdbc:postgresql://localhost:5432/document
@@ -11,7 +15,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update  # Changed from 'update' - let Flyway manage schema
-    show-sql: true
+    show-sql: true  
     properties:
       hibernate:
         format_sql: false
@@ -22,7 +26,13 @@ jwt:
   key-id: ${JWT_KEY_ID:library-key}
   expirationTime: ${EXP_TOKEN:86400} # 1 day in seconds
   refreshExpTime: ${EXP_REFRESH_TOKEN:604800} # 7 days in seconds
-
+aws:
+  region: ap-southeast-1
+  s3:
+    bucket: cnpmnc-document-storage-hk252
+  credentials:
+    access-key: {AWS_ACCESS_KEY:}
+    secret-key: {AWS_SECRET_KEY:}
 server:
   port: 8080
-  forward-headers-strategy: native
+  

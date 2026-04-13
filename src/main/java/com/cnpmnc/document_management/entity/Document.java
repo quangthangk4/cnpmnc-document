@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,11 +27,41 @@ import java.time.LocalDateTime;
 public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
+    
+    @Column(nullable = false)
     private String title;
-    @Enumerated(EnumType.STRING)
-    private DocumentType type;
-    private Long departmentId;
-    private String createBy;
-    private LocalDateTime createAt;
+    
+    @Column
+    private String type;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
+    
+    // Đã thay đổi: nullable = true để cho phép upload ẩn danh
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = true) 
+    private User createdBy;
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+    
+    // File metadata fields for US1
+    @Column(name = "file_path")
+    private String filePath;
+    
+    @Column(name = "file_name")
+    private String fileName;
+    
+    @Column(name = "file_size")
+    private Long fileSize;
+    
+    @Column(name = "file_type")
+    private String fileType;
+    
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

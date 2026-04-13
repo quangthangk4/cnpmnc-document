@@ -18,6 +18,13 @@ public enum ErrorCode {
     USERNAME_OR_PASSWORD_INCORRECT(1109, "Username or password is incorrect", HttpStatus.BAD_REQUEST),
     USERNAME_ALREADY_EXISTS(1101, "Username already exists", HttpStatus.BAD_REQUEST),
     DEPARTMENT_ALREADY_EXISTS(1102, "Department already exists", HttpStatus.BAD_REQUEST),
+    
+    // Document errors
+    DOCUMENT_NOT_FOUND(2001, "Document not found", HttpStatus.NOT_FOUND),
+    INVALID_FILE(2002, "Invalid file", HttpStatus.BAD_REQUEST),
+    FILE_SIZE_EXCEEDS(2003, "File size exceeds maximum limit", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_NOT_FOUND(2004, "Department not found", HttpStatus.NOT_FOUND),
+    UPLOAD_FAILED(2005, "Document upload failed", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     private final int code;

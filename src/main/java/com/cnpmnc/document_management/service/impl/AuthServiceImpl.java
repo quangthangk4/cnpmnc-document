@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
     private JWTClaimsSet buildClaims(User user, PurposeToken purpose, String jwtId, long expireSeconds) {
         return new JWTClaimsSet.Builder()
                 .issuer("document.com")
-                .subject(user.getId())
+                .subject(user.getId().toString())
                 .issueTime(Date.from(Instant.now()))
                 .expirationTime(Date.from(Instant.now().plusSeconds(expireSeconds)))
                 .jwtID(jwtId)

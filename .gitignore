@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+uploads/
+src/main/resources/certs/
+*.pem
+src/main/java/com/cnpmnc/document_management/config/S3Config.java
