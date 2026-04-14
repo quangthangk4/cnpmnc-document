@@ -20,7 +20,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(
+        User user = userRepository.findByIdWithRoles(username).orElseThrow(
                 () -> new BadCredentialsException("" ,new AppException(ErrorCode.USER_NOT_FOUND))
         );
 

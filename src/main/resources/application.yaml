@@ -23,16 +23,17 @@ spring:
 jwt:
   rsa-private-key: classpath:certs/privateKey.pem
   rsa-public-key: classpath:certs/publicKey.pem
-  key-id: ${JWT_KEY_ID:library-key}
+  key-id: ${JWT_KEY_ID:document-key}
   expirationTime: ${EXP_TOKEN:86400} # 1 day in seconds
   refreshExpTime: ${EXP_REFRESH_TOKEN:604800} # 7 days in seconds
+
 aws:
   region: ap-southeast-1
   s3:
     bucket: cnpmnc-document-storage-hk252
   credentials:
-    access-key: {AWS_ACCESS_KEY:}
-    secret-key: {AWS_SECRET_KEY:}
+    access-key: ${AWS_ACCESS_KEY:}
+    secret-key: ${AWS_SECRET_KEY:}
 server:
   port: 8080
   

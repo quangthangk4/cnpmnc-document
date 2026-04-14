@@ -35,7 +35,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return user.getId();
     }
 
     // Các method bắt buộc của UserDetails (nên trả về true nếu bạn chưa làm logic khóa tài khoản)

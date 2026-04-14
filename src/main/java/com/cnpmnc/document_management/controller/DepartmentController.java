@@ -1,10 +1,13 @@
 package com.cnpmnc.document_management.controller;
 
 import com.cnpmnc.document_management.dto.ApiResponse;
+import com.cnpmnc.document_management.dto.request.CreateDepartmentRequest;
 import com.cnpmnc.document_management.dto.response.DepartmentResponse;
 import com.cnpmnc.document_management.service.DepartmentService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,10 +29,9 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ApiResponse<Void> createDepartment(@RequestBody
-                                                                @NotBlank(message = "department name is required")
-                                                                String name) {
-        departmentService.createDepartment(name);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> createDepartment(@RequestBody @Valid CreateDepartmentRequest request) {
+        departmentService.createDepartment(request);
         return ApiResponse.success("success");
     }
 }

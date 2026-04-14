@@ -18,7 +18,13 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI libraryOpenAPI() {
         // 1. Cấu hình Server (để Swagger biết gọi API ở đâu)
-        Server localServer = new Server();
+        Server local = new Server();
+        local.setUrl("http://localhost:8080");
+        local.setDescription("Local server");
+
+        Server ngrok = new Server();
+        ngrok.setUrl("https://marg-astonishing-matthias.ngrok-free.dev");
+        ngrok.setDescription("Public server (ngrok)");
         // 2. Cấu hình Info (Thông tin đồ án)
         Info info = new Info()
                 .title("Library Management System API")
@@ -38,7 +44,7 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(info)
-                .servers(List.of(localServer))
+                .servers(List.of(local, ngrok))
                 .addSecurityItem(securityRequirement)
                 .components(components);
     }

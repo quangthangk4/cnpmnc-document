@@ -4,10 +4,12 @@ import com.cnpmnc.document_management.dto.ApiResponse;
 import com.cnpmnc.document_management.dto.DocumentResponse;
 import com.cnpmnc.document_management.dto.DocumentUploadRequest;
 import com.cnpmnc.document_management.service.impl.DocumentService;
+import com.cnpmnc.document_management.shared.CurrentUserUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.ByteArrayResource;
@@ -37,10 +39,9 @@ public class DocumentController {
             @RequestParam String title,
             @RequestParam String type,
             @RequestParam Integer departmentId,
-            @RequestParam MultipartFile file,
-            @RequestParam(required = false) UUID userId) throws IOException {
-        
-        
+            @RequestParam MultipartFile file) throws IOException {
+
+        String userId = CurrentUserUtils.getUserId();
         DocumentUploadRequest request = DocumentUploadRequest.builder()
                 .title(title)
                 .type(type)

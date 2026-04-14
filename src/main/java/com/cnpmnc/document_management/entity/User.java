@@ -21,8 +21,7 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID) // Tự động tạo UUID nếu bạn không truyền vào
-    @Column(columnDefinition = "uuid")
-    private UUID id;
+    private String id;
     
     @Column(name = "first_name")
     private String firstName;

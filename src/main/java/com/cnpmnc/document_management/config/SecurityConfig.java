@@ -40,19 +40,15 @@ public class SecurityConfig {
             "/api/documents/**",
             "/test/**",
     };
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers("/api/documents/upload")
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
-    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.authorizeHttpRequests(auth -> auth
-            .anyRequest().permitAll()
+                .requestMatchers(whiteList).permitAll()
+                .anyRequest().authenticated()
         );
         http.oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
@@ -72,7 +68,9 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
-                "https://*.ngrok-free.dev"
+                "http://localhost:8080",
+                "https://*.ngrok-free.dev",
+                "*"
         ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));

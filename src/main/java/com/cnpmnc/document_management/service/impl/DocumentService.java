@@ -45,7 +45,7 @@ public class DocumentService {
     @Value("${document.max-file-size:10485760}")
     private Long maxFileSize;
     
-    public DocumentResponse uploadDocument(DocumentUploadRequest request, UUID userId) throws IOException {
+    public DocumentResponse uploadDocument(DocumentUploadRequest request, String userId) throws IOException {
         MultipartFile file = request.getFile();
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is required");
@@ -60,7 +60,7 @@ public class DocumentService {
         
         User user = null;
         if (userId != null) {
-            user = userRepository.findById(userId.toString())
+            user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
         }
         
@@ -178,7 +178,7 @@ public class DocumentService {
                 .id(doc.getId())
                 .title(doc.getTitle())
                 .type(doc.getType())
-                .departmentId(doc.getDepartment().getId().intValue())
+                .departmentId(doc.getDepartment().getId())
                 .departmentName(doc.getDepartment().getName())
                 .createdBy(doc.getCreatedBy() != null ? doc.getCreatedBy().getId() : null)
                 .createdByName(doc.getCreatedBy() != null ? doc.getCreatedBy().getUsername() : "Anonymous")

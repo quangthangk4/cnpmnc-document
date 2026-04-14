@@ -1,5 +1,6 @@
 package com.cnpmnc.document_management.service.impl;
 
+import com.cnpmnc.document_management.dto.request.CreateDepartmentRequest;
 import com.cnpmnc.document_management.dto.response.DepartmentResponse;
 import com.cnpmnc.document_management.entity.Department;
 import com.cnpmnc.document_management.exception.AppException;
@@ -26,12 +27,12 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
-    public void createDepartment(String name) {
-        if (departmentRepository.existsByName(name)) {
+    public void createDepartment(CreateDepartmentRequest request) {
+        if (departmentRepository.existsByName(request.getName())) {
             throw new AppException(ErrorCode.DEPARTMENT_ALREADY_EXISTS);
         }
         Department department = Department.builder()
-                .name(name)
+                .name(request.getName())
                 .build();
         departmentRepository.save(department);
     }
