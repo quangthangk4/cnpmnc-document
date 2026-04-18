@@ -1,7 +1,7 @@
 package com.cnpmnc.document_management.repository;
 
 import com.cnpmnc.document_management.entity.Document;
-import com.cnpmnc.document_management.entity.User;
+import com.cnpmnc.document_management.entity.DocumentType;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +12,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findByDepartmentId(Integer departmentId);
-    List<Document> findByType(String type);
+
+    List<Document> findByType(DocumentType type);
     List<Document> findByCreatedById(String userId);
 
 
@@ -30,6 +31,7 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
                                    @Param("endDate") LocalDateTime endDate);
 
     boolean existsByIdAndCreatedBy_Id(Integer id, String createdById);
+
 
     boolean existsByIdAndDepartment_Id(Integer id, Integer departmentId);
 }

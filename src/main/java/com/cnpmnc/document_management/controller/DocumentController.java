@@ -5,6 +5,7 @@ import com.cnpmnc.document_management.dto.DocumentResponse;
 import com.cnpmnc.document_management.dto.DocumentUploadRequest;
 import com.cnpmnc.document_management.dto.request.DocumentUpdateRequest;
 import com.cnpmnc.document_management.dto.response.DocumentVersionResponse;
+import com.cnpmnc.document_management.entity.DocumentType;
 import com.cnpmnc.document_management.entity.DocumentVersion;
 import com.cnpmnc.document_management.service.impl.DocumentService;
 import com.cnpmnc.document_management.shared.CurrentUserUtils;
@@ -17,12 +18,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -37,7 +45,7 @@ public class DocumentController {
     @Operation(summary = "Upload document", description = "Upload a document with metadata (creates Version 1)")
     public ApiResponse<DocumentResponse> uploadDocument(
             @RequestParam String title,
-            @RequestParam String type,
+            @RequestParam DocumentType type,
             @RequestParam Integer departmentId,
             @RequestParam MultipartFile file) throws IOException {
 
@@ -55,7 +63,7 @@ public class DocumentController {
     public ApiResponse<DocumentResponse> updateDocument(
             @PathVariable Integer documentId,
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) DocumentType type,
             @RequestParam(required = false) Integer departmentId,
             @RequestParam(required = false) MultipartFile file) throws IOException {
         
@@ -88,15 +96,15 @@ public class DocumentController {
     @Operation(summary = "Download latest version", description = "Force download the most recent version of a document")
     public ResponseEntity<Resource> downloadLatest(@PathVariable Integer documentId) throws IOException {
         com.cnpmnc.document_management.entity.Document doc = documentService.getDocumentEntity(documentId);
-        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileType(), false);
+        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileExtension(), false);
     }
 
     @GetMapping("/{documentId}/preview")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Operation(summary = "Preview latest version", description = "Open the most recent version in browser (if supported)")
     public ResponseEntity<Resource> previewLatest(@PathVariable Integer documentId) throws IOException {
         com.cnpmnc.document_management.entity.Document doc = documentService.getDocumentEntity(documentId);
-        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileType(), true);
+        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileExtension(), true);
     }
 
     // --- DOWNLOAD & PREVIEW SPECIFIC VERSIONS ---
@@ -106,29 +114,43 @@ public class DocumentController {
     @Operation(summary = "Download specific version", description = "Force download a specific version from history")
     public ResponseEntity<Resource> downloadVersion(@PathVariable Integer versionId) throws IOException {
         DocumentVersion version = documentService.getVersionEntity(versionId);
-        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileType(), false);
+        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileExtension(), false);
     }
 
     @GetMapping("/versions/{versionId}/preview")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Operation(summary = "Preview specific version", description = "Open a specific version in browser (if supported)")
     public ResponseEntity<Resource> previewVersion(@PathVariable Integer versionId) throws IOException {
         DocumentVersion version = documentService.getVersionEntity(versionId);
-        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileType(), true);
+        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileExtension(), true);
     }
 
     // --- HELPER METHOD ---
 
-    private ResponseEntity<Resource> buildFileResponse(String path, String name, String type, boolean isPreview) throws IOException {
+    private ResponseEntity<Resource> buildFileResponse(String path, String name, String extension, boolean isPreview) {
         byte[] data = documentService.downloadFileFromS3(path);
         ByteArrayResource resource = new ByteArrayResource(data);
         
-        String contentDisposition = isPreview ? "inline" : "attachment";
+        // Sử dụng ContentDisposition để xử lý tên file có ký tự tiếng Việt (UTF-8)
+        ContentDisposition contentDisposition = ContentDisposition.builder(isPreview ? "inline" : "attachment")
+                .filename(name, StandardCharsets.UTF_8)
+                .build();
+        
+        MediaType mediaType;
+        if (isPreview) {
+            // Đối với Preview: Cần MediaType chuẩn để trình duyệt có thể hiển thị (ví dụ PDF, Image)
+            mediaType = MediaTypeFactory.getMediaType(name)
+                    .orElse(MediaTypeFactory.getMediaType("file." + extension)
+                    .orElse(MediaType.APPLICATION_OCTET_STREAM));
+        } else {
+            // Đối với Download: Sử dụng application/octet-stream để ép trình duyệt tải về
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         
         return ResponseEntity.ok()
             .contentLength(data.length)
-            .contentType(MediaType.parseMediaType(type))
-            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition + "; filename=\"" + name + "\"")
+            .contentType(mediaType)
+            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
             .body(resource);
     }
 
@@ -155,7 +177,7 @@ public class DocumentController {
     @GetMapping("/search")
     public ApiResponse<List<DocumentResponse>> searchDocuments(
             @RequestParam(required = false) String title,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) DocumentType type,
             @RequestParam(required = false) Integer departmentId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {

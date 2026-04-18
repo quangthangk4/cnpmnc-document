@@ -18,6 +18,7 @@ public class DocumentVersionResponse {
     private String fileName;
     private Long fileSize;
     private String fileType;
+    private String fileExtension;
     private String uploadBy;
     private String uploadByName;
     

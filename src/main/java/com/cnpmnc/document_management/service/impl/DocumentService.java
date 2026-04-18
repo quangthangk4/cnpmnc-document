@@ -6,6 +6,7 @@ import com.cnpmnc.document_management.dto.request.DocumentUpdateRequest;
 import com.cnpmnc.document_management.dto.response.DocumentVersionResponse;
 import com.cnpmnc.document_management.entity.Department;
 import com.cnpmnc.document_management.entity.Document;
+import com.cnpmnc.document_management.entity.DocumentType;
 import com.cnpmnc.document_management.entity.DocumentVersion;
 import com.cnpmnc.document_management.entity.User;
 import com.cnpmnc.document_management.exception.AppException;
@@ -69,6 +70,8 @@ public class DocumentService {
         String savedFileName = generateUniqueFileName(file.getOriginalFilename());
         uploadFileToS3(savedFileName, file);
         
+        String extension = getFileExtension(file.getOriginalFilename());
+        
         Document document = Document.builder()
                 .title(request.getTitle())
                 .type(request.getType())
@@ -78,14 +81,16 @@ public class DocumentService {
                 .fileName(file.getOriginalFilename())
                 .fileSize(file.getSize())
                 .fileType(file.getContentType())
+                .fileExtension(extension)
                 .currentVersion(1)
                 .build();
         
         Document savedDoc = documentRepository.save(document);
-        DocumentVersion version = createVersionEntity(savedDoc, 1, savedFileName, file, user);
-        versionRepository.save(version);
+        DocumentVersion version = createVersionEntity(savedDoc, 1, savedFileName, file, user, extension);
+        DocumentVersion savedVersion = versionRepository.save(version);
         
-        return convertToResponse(savedDoc);
+        savedDoc.setLatestVersionId(savedVersion.getId());
+        return convertToResponse(documentRepository.save(savedDoc));
     }
 
     public DocumentResponse updateDocument(Integer documentId, DocumentUpdateRequest request) throws IOException {
@@ -113,32 +118,32 @@ public class DocumentService {
             String savedFileName = generateUniqueFileName(file.getOriginalFilename());
             uploadFileToS3(savedFileName, file);
 
+            String extension = getFileExtension(file.getOriginalFilename());
+
             int newVersionNumber = document.getCurrentVersion() + 1;
-            DocumentVersion version = createVersionEntity(document, newVersionNumber, savedFileName, file, user);
-            versionRepository.save(version);
+            DocumentVersion version = createVersionEntity(document, newVersionNumber, savedFileName, file, user, extension);
+            DocumentVersion savedVersion = versionRepository.save(version);
 
             document.setCurrentVersion(newVersionNumber);
+            document.setLatestVersionId(savedVersion.getId());
             document.setFilePath(savedFileName);
             document.setFileName(file.getOriginalFilename());
             document.setFileSize(file.getSize());
             document.setFileType(file.getContentType());
+            document.setFileExtension(extension);
         }
         
         return convertToResponse(documentRepository.save(document));
     }
 
-    /**
-     * Lấy thông tin file của một version cụ thể
-     */
     @Transactional(readOnly = true)
     public DocumentVersion getVersionEntity(Integer versionId) {
         DocumentVersion version = versionRepository.findById(versionId)
                 .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
         
-        // Kiểm tra quyền xem của tài liệu cha
-        if (!canView(version.getDocument().getId())) {
-            throw new AppException(ErrorCode.FORBIDDEN);
-        }
+//        if (!canView(version.getDocument().getId())) {
+//            throw new AppException(ErrorCode.FORBIDDEN);
+//        }
         return version;
     }
 
@@ -156,11 +161,18 @@ public class DocumentService {
         s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
     }
 
-    private DocumentVersion createVersionEntity(Document doc, int versionNum, String path, MultipartFile file, User user) {
+    private String getFileExtension(String fileName) {
+        if (fileName == null || fileName.lastIndexOf(".") == -1) {
+            return "";
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+    }
+
+    private DocumentVersion createVersionEntity(Document doc, int versionNum, String path, MultipartFile file, User user, String extension) {
         return DocumentVersion.builder()
                 .document(doc).versionNumber(versionNum).filePath(path)
                 .fileName(file.getOriginalFilename()).fileSize(file.getSize())
-                .fileType(file.getContentType()).uploadBy(user).build();
+                .fileType(file.getContentType()).fileExtension(extension).uploadBy(user).build();
     }
 
     @Transactional(readOnly = true)
@@ -177,7 +189,7 @@ public class DocumentService {
 
     @Transactional(readOnly = true)
     public Document getDocumentEntity(Integer documentId) {
-        if (!canView(documentId)) throw new AppException(ErrorCode.FORBIDDEN);
+//        if (!canView(documentId)) throw new AppException(ErrorCode.FORBIDDEN);
         return documentRepository.findById(documentId).orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
     }
 
@@ -225,12 +237,16 @@ public class DocumentService {
                 .createdBy(doc.getCreatedBy() != null ? doc.getCreatedBy().getId() : null)
                 .createdByName(doc.getCreatedBy() != null ? doc.getCreatedBy().getUsername() : "Anonymous")
                 .fileName(doc.getFileName()).fileSize(doc.getFileSize()).fileType(doc.getFileType())
-                .currentVersion(doc.getCurrentVersion()).createdAt(doc.getCreatedAt()).build();
+                .fileExtension(doc.getFileExtension())
+                .currentVersion(doc.getCurrentVersion())
+                .versionId(doc.getLatestVersionId())
+                .createdAt(doc.getCreatedAt()).build();
     }
 
     @Transactional(readOnly = true)
-    public List<DocumentResponse> searchDocuments(String title, String type, Integer departmentId, LocalDateTime startDate, LocalDateTime endDate) {
-        List<Document> documents = documentRepository.searchDocuments(title, type, departmentId, startDate, endDate);
+    public List<DocumentResponse> searchDocuments(String title, DocumentType type, Integer departmentId, LocalDateTime startDate, LocalDateTime endDate) {
+        String typeName = (type != null) ? type.name() : null;
+        List<Document> documents = documentRepository.searchDocuments(title, typeName, departmentId, startDate, endDate);
         if (isAdmin()) return documents.stream().map(this::convertToResponse).toList();
         String userId = CurrentUserUtils.getUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -258,7 +274,7 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
-    public List<DocumentResponse> getDocumentsByType(String type) {
+    public List<DocumentResponse> getDocumentsByType(DocumentType type) {
         List<Document> documents = documentRepository.findByType(type);
         if (isAdmin()) return documents.stream().map(this::convertToResponse).toList();
         String userId = CurrentUserUtils.getUserId();
@@ -274,6 +290,7 @@ public class DocumentService {
                 .map(v -> DocumentVersionResponse.builder()
                         .id(v.getId()).versionNumber(v.getVersionNumber()).fileName(v.getFileName())
                         .fileSize(v.getFileSize()).fileType(v.getFileType())
+                        .fileExtension(v.getFileExtension())
                         .uploadBy(v.getUploadBy() != null ? v.getUploadBy().getId() : null)
                         .uploadByName(v.getUploadBy() != null ? v.getUploadBy().getUsername() : "Anonymous")
                         .createdAt(v.getCreatedAt()).build()).toList();

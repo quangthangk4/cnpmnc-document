@@ -26,7 +26,8 @@ public class Document {
     private String title;
     
     @Column
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private DocumentType type;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
@@ -56,8 +57,14 @@ public class Document {
     @Column(name = "file_type")
     private String fileType;
 
+    @Column(name = "file_extension")
+    private String fileExtension;
+
     @Column(name = "current_version")
     private Integer currentVersion;
+
+    @Column(name = "latest_version_id")
+    private Integer latestVersionId;
     
     @PrePersist
     protected void onCreate() {

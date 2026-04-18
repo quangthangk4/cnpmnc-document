@@ -39,6 +39,9 @@ public class DocumentVersion {
     @Column(name = "file_type")
     private String fileType;
 
+    @Column(name = "file_extension")
+    private String fileExtension;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "upload_by")
     private User uploadBy;

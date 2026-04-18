@@ -1,5 +1,6 @@
 package com.cnpmnc.document_management.dto;
 
+import com.cnpmnc.document_management.entity.DocumentType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import java.io.Serializable;
 @Builder
 public class DocumentUploadRequest implements Serializable {
     private String title;
-    private String type;
+    private DocumentType type;
     private Integer departmentId;
     private MultipartFile file;
 }

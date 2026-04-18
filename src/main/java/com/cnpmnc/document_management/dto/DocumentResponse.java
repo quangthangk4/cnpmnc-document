@@ -1,5 +1,6 @@
 package com.cnpmnc.document_management.dto;
 
+import com.cnpmnc.document_management.entity.DocumentType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 public class DocumentResponse implements Serializable {
     private Integer id;
     private String title;
-    private String type;
+    private DocumentType type;
     private Integer departmentId;
     private String departmentName;
     private String createdBy;
@@ -23,7 +24,9 @@ public class DocumentResponse implements Serializable {
     private String fileName;
     private Long fileSize;
     private String fileType;
+    private String fileExtension;
     private Integer currentVersion;
+    private Integer versionId;
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
