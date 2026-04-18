@@ -3,6 +3,7 @@ package com.cnpmnc.document_management.service.impl;
 import com.cnpmnc.document_management.dto.request.LoginRequest;
 import com.cnpmnc.document_management.dto.request.RegisterRequest;
 import com.cnpmnc.document_management.dto.response.TokenResponse;
+import com.cnpmnc.document_management.dto.response.UserResponse;
 import com.cnpmnc.document_management.entity.Role;
 import com.cnpmnc.document_management.entity.User;
 import com.cnpmnc.document_management.enums.PurposeToken;
@@ -12,6 +13,7 @@ import com.cnpmnc.document_management.repository.RoleRepository;
 import com.cnpmnc.document_management.repository.UserRepository;
 import com.cnpmnc.document_management.service.AuthService;
 import com.cnpmnc.document_management.service.UserService;
+import com.cnpmnc.document_management.shared.CurrentUserUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -73,5 +75,22 @@ public class UserServiceImpl implements UserService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    @Override
+    public UserResponse getCurrentUser() {
+        String userId = CurrentUserUtils.getUserId();
+        User user = userRepository.findById(userId).orElseThrow(
+            () -> new AppException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        return UserResponse.builder()
+            .id(user.getId())
+            .firstName(user.getFirstName())
+            .lastName(user.getLastName())
+            .username(user.getUsername())
+            .departmentId(user.getDepartmentId())
+            .roles(user.getRoles())
+            .build();
     }
 }
