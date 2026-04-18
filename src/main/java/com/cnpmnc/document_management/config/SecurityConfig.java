@@ -3,6 +3,7 @@ package com.cnpmnc.document_management.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,6 +42,11 @@ public class SecurityConfig {
             "/test/**",
     };
 
+    private final String[] apiWhiteList = {
+        "/api/v1/departments",
+        "/api/documents/{documentId}/preview",
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
@@ -48,6 +54,7 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(whiteList).permitAll()
+                .requestMatchers(HttpMethod.GET, apiWhiteList).permitAll()
                 .anyRequest().authenticated()
         );
         http.oauth2ResourceServer(oauth2 -> oauth2

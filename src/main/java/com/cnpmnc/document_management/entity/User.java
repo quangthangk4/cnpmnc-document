@@ -36,8 +36,7 @@ public class User {
     private String password;
 
     // ĐÃ XÓA: firstName và lastName bị trùng lặp ở đây
-    
-    private Long departmentId;
+    private Integer departmentId;
 
     @CreatedDate
     @Column(updatable = false)

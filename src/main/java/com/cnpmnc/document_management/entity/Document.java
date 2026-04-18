@@ -1,21 +1,14 @@
 package com.cnpmnc.document_management.entity;
 
-import com.cnpmnc.document_management.enums.DocumentType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Table(name = "documents")
 @Entity
@@ -27,7 +20,7 @@ import java.time.LocalDateTime;
 public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
     
     @Column(nullable = false)
     private String title;
@@ -38,8 +31,11 @@ public class Document {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<DocumentVersion> versions = new ArrayList<>();
     
-    // Đã thay đổi: nullable = true để cho phép upload ẩn danh
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = true) 
     private User createdBy;
@@ -47,7 +43,7 @@ public class Document {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    // File metadata fields for US1
+    // Lưu thông tin bản mới nhất để query nhanh
     @Column(name = "file_path")
     private String filePath;
     
@@ -59,9 +55,13 @@ public class Document {
     
     @Column(name = "file_type")
     private String fileType;
+
+    @Column(name = "current_version")
+    private Integer currentVersion;
     
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.currentVersion == null) this.currentVersion = 1;
     }
 }

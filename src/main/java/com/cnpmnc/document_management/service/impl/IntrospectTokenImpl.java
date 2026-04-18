@@ -20,6 +20,9 @@ import java.util.Date;
 public class IntrospectTokenImpl implements IntrospectToken {
     @Override
     public void verifyToken(String token, RSAPublicKey publicKey, PurposeToken expectedPurpose) {
+        if (token == null) {
+            throw new AppException(ErrorCode.TOKEN_MISSING);
+        }
         JWTClaimsSet claimsSet = parseAndVerifyToken(token, publicKey);
         if (claimsSet == null) {
             throw new AppException(ErrorCode.TOKEN_INVALID);

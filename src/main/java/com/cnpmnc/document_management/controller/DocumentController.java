@@ -3,38 +3,38 @@ package com.cnpmnc.document_management.controller;
 import com.cnpmnc.document_management.dto.ApiResponse;
 import com.cnpmnc.document_management.dto.DocumentResponse;
 import com.cnpmnc.document_management.dto.DocumentUploadRequest;
+import com.cnpmnc.document_management.dto.request.DocumentUpdateRequest;
+import com.cnpmnc.document_management.dto.response.DocumentVersionResponse;
+import com.cnpmnc.document_management.entity.DocumentVersion;
 import com.cnpmnc.document_management.service.impl.DocumentService;
 import com.cnpmnc.document_management.shared.CurrentUserUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
-@Tag(name = "Document Management", description = "Upload and manage documents with metadata")
+@Tag(name = "Document Management", description = "Upload and manage documents with metadata and versioning")
 public class DocumentController {
     
     private final DocumentService documentService;
     
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload document", description = "Upload a document with metadata")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Upload document", description = "Upload a document with metadata (creates Version 1)")
     public ApiResponse<DocumentResponse> uploadDocument(
             @RequestParam String title,
             @RequestParam String type,
@@ -43,80 +43,122 @@ public class DocumentController {
 
         String userId = CurrentUserUtils.getUserId();
         DocumentUploadRequest request = DocumentUploadRequest.builder()
-                .title(title)
-                .type(type)
-                .departmentId(departmentId)
-                .file(file)
-                .build();
+                .title(title).type(type).departmentId(departmentId).file(file).build();
         
         DocumentResponse response = documentService.uploadDocument(request, userId);
         return ApiResponse.created("Document uploaded successfully", response);
     }
+
+    @PutMapping(value = "/{documentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Update document", description = "Update metadata and optionally upload a new file version")
+    public ApiResponse<DocumentResponse> updateDocument(
+            @PathVariable Integer documentId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer departmentId,
+            @RequestParam(required = false) MultipartFile file) throws IOException {
+        
+        DocumentUpdateRequest request = DocumentUpdateRequest.builder()
+                .title(title).type(type).departmentId(departmentId).file(file).build();
+
+        DocumentResponse response = documentService.updateDocument(documentId, request);
+        return ApiResponse.success("Document updated successfully", response);
+    }
     
     @GetMapping("/{documentId}")
-    @Operation(summary = "Get document", description = "Retrieve document details by ID")
-    public ApiResponse<DocumentResponse> getDocument(@PathVariable Integer documentId) {
+    @PreAuthorize("hasRole('ADMIN') or @documentService.canView(#documentId)")
+    public ApiResponse<DocumentResponse> getDocument(@PathVariable("documentId") Integer documentId) {
         DocumentResponse response = documentService.getDocument(documentId);
         return ApiResponse.success(response);
     }
-    
+
+    @GetMapping("/{documentId}/versions")
+    @PreAuthorize("hasRole('ADMIN') or @documentService.canView(#documentId)")
+    @Operation(summary = "Get document versions", description = "Retrieve all versions of a document")
+    public ApiResponse<List<DocumentVersionResponse>> getDocumentVersions(@PathVariable Integer documentId) {
+        List<DocumentVersionResponse> versions = documentService.getDocumentVersions(documentId);
+        return ApiResponse.success(versions);
+    }
+
+    // --- DOWNLOAD & PREVIEW LATEST ---
+
+    @GetMapping("/{documentId}/download")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Download latest version", description = "Force download the most recent version of a document")
+    public ResponseEntity<Resource> downloadLatest(@PathVariable Integer documentId) throws IOException {
+        com.cnpmnc.document_management.entity.Document doc = documentService.getDocumentEntity(documentId);
+        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileType(), false);
+    }
+
+    @GetMapping("/{documentId}/preview")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Preview latest version", description = "Open the most recent version in browser (if supported)")
+    public ResponseEntity<Resource> previewLatest(@PathVariable Integer documentId) throws IOException {
+        com.cnpmnc.document_management.entity.Document doc = documentService.getDocumentEntity(documentId);
+        return buildFileResponse(doc.getFilePath(), doc.getFileName(), doc.getFileType(), true);
+    }
+
+    // --- DOWNLOAD & PREVIEW SPECIFIC VERSIONS ---
+
+    @GetMapping("/versions/{versionId}/download")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Download specific version", description = "Force download a specific version from history")
+    public ResponseEntity<Resource> downloadVersion(@PathVariable Integer versionId) throws IOException {
+        DocumentVersion version = documentService.getVersionEntity(versionId);
+        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileType(), false);
+    }
+
+    @GetMapping("/versions/{versionId}/preview")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @Operation(summary = "Preview specific version", description = "Open a specific version in browser (if supported)")
+    public ResponseEntity<Resource> previewVersion(@PathVariable Integer versionId) throws IOException {
+        DocumentVersion version = documentService.getVersionEntity(versionId);
+        return buildFileResponse(version.getFilePath(), version.getFileName(), version.getFileType(), true);
+    }
+
+    // --- HELPER METHOD ---
+
+    private ResponseEntity<Resource> buildFileResponse(String path, String name, String type, boolean isPreview) throws IOException {
+        byte[] data = documentService.downloadFileFromS3(path);
+        ByteArrayResource resource = new ByteArrayResource(data);
+        
+        String contentDisposition = isPreview ? "inline" : "attachment";
+        
+        return ResponseEntity.ok()
+            .contentLength(data.length)
+            .contentType(MediaType.parseMediaType(type))
+            .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition + "; filename=\"" + name + "\"")
+            .body(resource);
+    }
+
+    // --- OTHER ENDPOINTS ---
+
     @GetMapping("/department/{departmentId}")
-    @Operation(summary = "Get documents by department", description = "List all documents in a department")
     public ApiResponse<List<DocumentResponse>> getByDepartment(@PathVariable Integer departmentId) {
-        List<DocumentResponse> documents = documentService.getDocumentsByDepartment(departmentId);
-        return ApiResponse.success(documents);
+        return ApiResponse.success(documentService.getDocumentsByDepartment(departmentId));
     }
     
-    @GetMapping("/type/{type}")
-    @Operation(summary = "Get documents by type", description = "List all documents of a specific type")
-    public ApiResponse<List<DocumentResponse>> getByType(@PathVariable String type) {
-        List<DocumentResponse> documents = documentService.getDocumentsByType(type);
-        return ApiResponse.success(documents);
-    }
-    
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Get user documents", description = "List all documents uploaded by a user")
-    public ApiResponse<List<DocumentResponse>> getByUser(@PathVariable UUID userId) {
-        List<DocumentResponse> documents = documentService.getDocumentsByUser(userId);
-        return ApiResponse.success(documents);
-    }
-    
-    @GetMapping
-    @Operation(summary = "Get all documents", description = "List all documents in the system")
-    public ApiResponse<List<DocumentResponse>> getAllDocuments() {
-        List<DocumentResponse> documents = documentService.getAllDocuments();
-        return ApiResponse.success(documents);
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ApiResponse<List<DocumentResponse>> getMyDocuments() {
+        return ApiResponse.success(documentService.getMyDocuments(CurrentUserUtils.getUserId()));
     }
     
     @DeleteMapping("/{documentId}")
-    @Operation(summary = "Delete document", description = "Delete a document and its file")
+    @PreAuthorize("hasRole('ADMIN') or (@documentService.isOwner(#documentId))")
     public ApiResponse<Void> deleteDocument(@PathVariable Integer documentId) throws IOException {
         documentService.deleteDocument(documentId);
         return ApiResponse.deleteSuccess("Document deleted successfully");
     }
+
     @GetMapping("/search")
-    @Operation(summary = "Search documents", description = "Search by multiple fields. Returns most recent first.")
     public ApiResponse<List<DocumentResponse>> searchDocuments(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Integer departmentId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
-        
-        List<DocumentResponse> documents = documentService.searchDocuments(title, type, departmentId, startDate, endDate);
-        return ApiResponse.success(documents);
+        return ApiResponse.success(documentService.searchDocuments(title, type, departmentId, startDate, endDate));
     }
-
-    @GetMapping("/{documentId}/download")
-    @Operation(summary = "Download document", description = "Download file directly from Amazon S3")
-    public ResponseEntity<Resource> downloadDocument(@PathVariable Integer documentId) throws IOException {
-        com.cnpmnc.document_management.entity.Document document = documentService.getDocumentEntity(documentId);
-        byte[] data = documentService.downloadFileFromS3(document.getFilePath());
-        ByteArrayResource resource = new ByteArrayResource(data);
-        return ResponseEntity.ok()
-            .contentLength(data.length)
-            .contentType(MediaType.parseMediaType(document.getFileType()))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
-            .body(resource);
-}
 }

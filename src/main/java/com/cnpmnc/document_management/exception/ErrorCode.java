@@ -14,6 +14,7 @@ public enum ErrorCode {
     NOT_OWNER(1405, "You are not the owner of this resource", HttpStatus.FORBIDDEN),
     TOKEN_REFRESH_FAILED(1406, "Token refresh failed", HttpStatus.BAD_REQUEST),
     TOKEN_INVALID(2604, "Token invalid", HttpStatus.UNAUTHORIZED),
+    TOKEN_MISSING(2605, "Token missing", HttpStatus.UNAUTHORIZED),
     USER_NOT_FOUND(1100, "User not found", HttpStatus.NOT_FOUND),
     USERNAME_OR_PASSWORD_INCORRECT(1109, "Username or password is incorrect", HttpStatus.BAD_REQUEST),
     USERNAME_ALREADY_EXISTS(1101, "Username already exists", HttpStatus.BAD_REQUEST),

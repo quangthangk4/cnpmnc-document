@@ -9,6 +9,6 @@ public record RegisterRequest(
         String username,
         @NotBlank(message = "Password is required")
         String password,
-        Long departmentId
+        Integer departmentId
 ) {
 }

@@ -1,19 +1,19 @@
 package com.cnpmnc.document_management.repository;
 
 import com.cnpmnc.document_management.entity.Document;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import com.cnpmnc.document_management.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Integer> {
     List<Document> findByDepartmentId(Integer departmentId);
     List<Document> findByType(String type);
-    List<Document> findByCreatedById(UUID userId);
+    List<Document> findByCreatedById(String userId);
 
 
 @Query(value = "SELECT d FROM Document d WHERE " +
@@ -28,5 +28,9 @@ public interface DocumentRepository extends JpaRepository<Document, Integer> {
                                    @Param("departmentId") Integer departmentId,
                                    @Param("startDate") LocalDateTime startDate,
                                    @Param("endDate") LocalDateTime endDate);
+
+    boolean existsByIdAndCreatedBy_Id(Integer id, String createdById);
+
+    boolean existsByIdAndDepartment_Id(Integer id, Integer departmentId);
 }
 

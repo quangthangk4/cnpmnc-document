@@ -19,7 +19,6 @@ public class AuthController {
 
     private final UserService userService;
 
-
     @PostMapping("/login")
     public ApiResponse<TokenResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
         return ApiResponse.success("login success", userService.login(loginRequest));
@@ -27,7 +26,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ApiResponse<TokenResponse> register(@RequestBody @Valid RegisterRequest request) {
-        userService.registerUser(request);
-        return ApiResponse.success("register success");
+        return ApiResponse.success("register success", userService.registerUser(request));
     }
 }
